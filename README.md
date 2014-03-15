@@ -1,6 +1,6 @@
 ## What does aur-scraper do?
 
-Aur-scraper generates a list of package names from the Arch User Repository (AUR) at https://aur.archlinux.org.
+Aur-scraper generates a list of package names from the [Arch User Repository (AUR)](https://aur.archlinux.org].
 
 #### Why aur-scraper?
 
