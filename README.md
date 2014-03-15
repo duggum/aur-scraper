@@ -12,7 +12,7 @@ There may be other uses for such a list, but I haven't really given it much thou
 
 #### Installation
 
-While I plan on creating an AUR package, it does not yet exist. Meantime, simply clone the repo and do the following:
+While I plan on creating an AUR package, it does not yet exist. Meantime, simply do the following:
 
 1. Clone this repository.
 2. Copy/link _aur-scraper_ to a location in your $PATH.
