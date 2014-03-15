@@ -45,7 +45,7 @@ cat 2> /dev/null > "$LOG_FILE" <<HEADER
 HEADER
 }
 
-# _notify() - logs results and notifies user of completion status
+# _notify() - provides visual notification of completion status
 #
 # notifications will only be shown if "notify-send" exists on the
 # user's system.
