@@ -21,12 +21,12 @@ While I plan on creating an AUR package, it does not yet exist. Meantime, simply
 5. Execute _aur-scraper_.
 
 ```
-    git clone git@github.com:duggum/aur-scraper.git
-    cd aur-scraper
-    cp aur-scraper $HOME/bin
-    mkdir -p $HOME/.aura
-    cp -R icons $HOME/.aura
-    aur-scraper
+    $> git clone git@github.com:duggum/aur-scraper.git
+    $> cd aur-scraper
+    $> cp aur-scraper $HOME/bin
+    $> mkdir -p $HOME/.aura
+    $> cp -R icons $HOME/.aura
+    $> aur-scraper
 ```
 
 #### What aur-scraper does:
