@@ -64,7 +64,7 @@ For example, for Bash you might have something like this:
 
 For the visually impressed:
 
-![](https://www.copy.com/s/TLqStMfpML4w/aur-comp.png)
+![](https://www.copy.com/TLqStMfpML4w)
 
 #### Beware!!
 
