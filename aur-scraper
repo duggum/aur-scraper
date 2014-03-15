@@ -1,0 +1,235 @@
+#!/bin/bash
+#
+#   aur-scraper
+#
+#   Copyright 2014 Dave Jopson <duggum@duggum.com>
+#
+#   aur-scraper is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+################################################################################
+
+# working files - these will need tweaking if included in a package
+LOG_FILE="$HOME/aur-scraper.log"                  # log file for errors
+INSTALL_DIR="$HOME/.aura"
+PKG_LIST="$INSTALL_DIR/aur_pkg_list.txt"          # final home of the pkg list
+PKG_LIST_BACKUP="$INSTALL_DIR/aur_pkg_list.bak"   # backup of previous list
+TEMP_FILE="$INSTALL_DIR/aur_pkg.temp"             # temp file used for scraping
+ERR_ICON="$INSTALL_DIR/icons/error.svg"
+SUC_ICON="$INSTALL_DIR/icons/success.svg"
+
+URL=""          # url of the AUR page to be scraped
+PER_PAGE="250"  # how many AUR results to pull per page (50, 100, or 250)
+COUNT="0"       # results counter incremented by $PER_PAGE
+PKG_COUNT=""    # raw package count before removing orphans
+LOOPS="0"       # the # of pages that need scraping $PKG_COUNT/$PER_PAGE
+ERROR="0"       # tracks error status
+
+# _log_header() - writes time/date info to log file
+_log_header() {
+cat 2> /dev/null > "$LOG_FILE" <<HEADER
+------------------------------------------------------
+|     Last updated: $( date )     |
+------------------------------------------------------
+
+HEADER
+}
+
+# _notify() - logs results and notifies user of completion status
+#
+# notifications will only be shown if "notify-send" exists on the
+# user's system.
+_notify() {
+  local is_notify timeout title msg
+  which notify-send &> /dev/null
+  if [[ $? == 0 ]]; then
+    case "$1" in
+      0)
+        timeout="10000"
+        title="AUR Scraper - SUCCESS!"
+        msg="The list of AUR packages has been successfully updated. "
+        notify-send -t "$timeout" -u normal -i "$SUC_ICON" "$title" "$msg"
+        return 0
+        ;;
+      [1-7])
+        timeout="10000"
+        title="AUR Scraper - ERROR!"
+        msg="Please see the log file at: <i>$LOG_FILE</i> "
+        notify-send -t "$timeout" -u normal -i "$ERR_ICON" "$title" "$msg"
+        return 0
+        ;;
+      99)
+        timeout="10000"
+        title="AUR Scraper - ERROR!"
+        msg="Unable to create the log file at: <i>$LOG_FILE</i> "
+        notify-send -t "$timeout" -u normal -i "$ERR_ICON" "$title" "$msg"
+        return 0
+        ;;
+    esac
+  fi
+  return 1
+}
+
+# _log() - Writes success or error messages to the log file
+_log() {
+  local msg code="$1"
+
+  case $code in
+    0)  msg="The list of AUR packages has been successfully updated." ;;
+    1)  msg="Failed to create the log file at $LOG_FILE" ;;
+    2)  msg="Failed to create installation directory at $INSTALL_DIR" ;;
+    3)  msg="Failed to create TEMP file at $TEMP_FILE" ;;
+    4)  msg="Failed to backup existing package list at $PKG_LIST_BACKUP" ;;
+    5)  msg="Failed to create new package list file at $PKG_LIST. Backup restored." ;;
+    6)  msg="Curl could not complete the data transfer (package count)." ;;
+    7)  msg="Curl could not complete the data transfer (package list)." ;;
+    99) msg="Unable to create the log file at $LOG_FILE" ;;
+  esac
+
+  if [[ "$code" == "0" ]]; then
+    echo -e "\n>> Success: $msg\n" >> "$LOG_FILE"
+  elif [[ "$code" != "99" ]]; then
+    echo -e "\n>> Error: $msg\n" >> "$LOG_FILE"
+    echo
+    cat "$LOG_FILE"
+  fi
+
+  _notify "$code"
+
+  exit "$code"
+}
+
+# _init() - initializes the required files
+_init() {
+
+  # initialize log file
+  touch "$LOG_FILE"
+  if [[ $? != 0 ]]; then
+    _log "99"
+  fi
+  _log_header
+
+  # create install dir in $HOME
+  if [[ ! -d "$INSTALL_DIR" ]]; then
+    mkdir -p "$INSTALL_DIR"  &>> "$LOG_FILE"
+    if [[ $? != 0 ]]; then
+      _log "2"
+    fi
+  fi
+
+  # create new temp file
+  if [[ -f "$TEMP_FILE" ]] ; then
+    rm "$TEMP_FILE" 2>> "$LOG_FILE"
+  fi
+  touch "$TEMP_FILE" 2>> "$LOG_FILE"
+  if [[ $? != 0 ]]; then
+    _log "3"
+  fi
+
+  # backup previous package list and create a new one
+  if [[ -f "$PKG_LIST" ]] ; then
+    cp "$PKG_LIST" "$PKG_LIST_BACKUP" 2>> "$LOG_FILE"
+    if [[ $? != 0 ]]; then
+      _log "4"
+    fi
+    rm "$PKG_LIST" 2>> "$LOG_FILE"
+  fi
+  touch "$PKG_LIST" 2>> "$LOG_FILE"
+  if [[ $? != 0 ]]; then
+    cp "$PKG_LIST_BACKUP" "$PKG_LIST"
+    _log "5"
+  fi
+}
+
+# _upd_url($COUNT) - updates the URL package COUNT for each page load
+#
+# The AUR website only allows a maximum of 250 results per page, so the package
+# count in the URL (?O=$COUNT) has to be incremented $PKG_COUNT/$PER_PAGE number
+# of times to iterate through all of the search results.
+_upd_url() {
+  URL="https://aur.archlinux.org/packages/?O=$1&C=0&SeB=n&K=&outdated=off&SB=n&SO=a&PP=250&do_Search=Go"
+}
+
+# _get_pkg_count($URL) - retrieve the number of packages in the AUR
+#
+# this information is conveniently included in the AUR search results page
+_get_pkg_count() {
+  curl "$1" -sS 2>> "$LOG_FILE" > "$TEMP_FILE" &
+  wait $!
+  if [[ $? != 0 ]]; then
+    _log "6"
+  fi
+  PKG_COUNT="$( sed -n '0,/packages found/s/.*<p>\(.*\) packages found.*/\1/p' \
+    "$TEMP_FILE" )"
+  cat /dev/null > "$TEMP_FILE"
+  return 0
+}
+
+# _get_pkgs($URL) - retrieve the raw HTML data for each page of search results
+#                   using an update URL
+_get_pkgs() {
+  curl "$1" -sS 2>> "$LOG_FILE" >> "$TEMP_FILE" &
+  wait $!
+  if [[ $? != 0 ]]; then
+    _log "7"
+  fi
+  return 0
+}
+
+# _get_raw() - retrieves the raw package data from the AUR
+#              in HTML format
+_get_raw() {
+  # the # of pages of results we have to iterate through
+  let "LOOPS=$PKG_COUNT/$PER_PAGE"
+
+  # get raw HTML from each page of search results
+  while [[ "$LOOPS" -gt 0 ]] ; do
+    let "COUNT += $PER_PAGE"
+    _upd_url "$COUNT"
+    _get_pkgs "$URL"
+    let "LOOPS--"
+  done
+}
+
+# _scrape - removes orphan package entries and extracts individual package
+#                names from the raw HTML data
+_scrape() {
+  cat "$TEMP_FILE" | \
+    tac | \
+    sed '/<span>orphan<\/span>/I,+5 d' | \
+    tac | \
+    grep href=\"\/packages\/.*\/\" | \
+    sed -E 's/.*<a href="\/packages\/.*">(.*)<\/a><\/td>.*/\1/' > "$PKG_LIST"
+  return 0
+}
+
+# initialize
+_init
+
+# initialize the AUR url
+_upd_url "$COUNT"
+
+# get number of packages in AUR
+_get_pkg_count "$URL"
+
+# get raw data from the AUR
+_get_raw
+
+# clean the data and extract
+_scrape
+
+# tidy up
+rm "$TEMP_FILE"
+
+# log success
+_log "0"
