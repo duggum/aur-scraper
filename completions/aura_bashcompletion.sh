@@ -2,7 +2,7 @@
 #
 #   This file is part of aur-scrpaer
 #
-#   Copyright 2014 Dave Jopson <duggum@gmail.com>
+#   Copyright 2014 Dave Jopson <duggum@duggum.com>
 #
 #   aur-scraper is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -20,12 +20,9 @@
 ################################################################################
 #
 # Includes completion for AUR packages with the installation
-# of the aur_scraper.sh script.
-#
-# TODO: write README and other info for aur-scraper.sh
+# of the aur_scraper script.
 
 # retrieve list of aur packages
-# TODO: determine best default location (/etc/aura _or_ ~/.aura?)
 _aura_get_aur_pkgs() {
     local aur_list="$HOME/.aura/aur_pkg_list.txt"
     if [[ -f "$aur_list" ]]; then
