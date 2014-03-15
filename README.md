@@ -64,13 +64,13 @@ For example, for Bash you might have something like this:
 
 For the visually impressed:
 
-![](https://copy.com/TLqStMfpML4w)
+![AUR Completion in Action](https://copy.com/TLqStMfpML4w)
 
 #### Beware!!
 
 In case you didn't notice in the image above, you will end up with a list of 30,000+ package names (out of 47,630 at last check). Downloading and processing the raw HTML from the AUR website takes time:
 
-![](https://copy.com/wLSRNLqxK78V)
+![aur-scraper Run Time](https://copy.com/wLSRNLqxK78V)
 
 While a few minutes on a one-off run isn't a big deal, the AUR is a moving target. Depending on your use of the repository, you may want to update your local list more or less frequently. Some options to do so include:
 
