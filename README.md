@@ -64,7 +64,7 @@ For example, for Bash you might have something like this:
 
 For the visually impressed:
 
-![](https://www.copy.com/TLqStMfpML4w)
+![](https://copy.com/TLqStMfpML4w)
 
 #### Beware!!
 
