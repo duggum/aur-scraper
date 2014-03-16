@@ -90,13 +90,11 @@ _log() {
 
   case $code in
     0)  msg="The list of AUR packages has been successfully updated."           ;;
-    1)  msg="Failed to create the log file at $LOG_FILE"                        ;;
-    2)  msg="Failed to create installation directory at $INSTALL_DIR"           ;;
-    3)  msg="Failed to create TEMP file at $TEMP_FILE"                          ;;
-    4)  msg="Failed to backup existing package list at $PKG_LIST_BACKUP"        ;;
-    5)  msg="Failed to create package list file at $PKG_LIST. Backup restored." ;;
-    6)  msg="Curl could not complete the data transfer (package count)."        ;;
-    7)  msg="Curl could not complete the data transfer (package list)."         ;;
+    1)  msg="Failed to create TEMP file at $TEMP_FILE"                          ;;
+    2)  msg="Failed to backup existing package list at $PKG_LIST_BACKUP"        ;;
+    3)  msg="Failed to create package list file at $PKG_LIST. Backup restored." ;;
+    4)  msg="Curl could not complete the data transfer (package count)."        ;;
+    5)  msg="Curl could not complete the data transfer (package list)."         ;;
     99) msg="Unable to create the log file at $LOG_FILE"                        ;;
   esac
 
@@ -123,35 +121,27 @@ _init() {
   fi
   _log_header
 
-  # create install dir in /etc/aur-scraper
-  if [[ ! -d "$INSTALL_DIR" ]]; then
-    mkdir -p "$INSTALL_DIR"  &>> "$LOG_FILE"
-    if [[ $? != 0 ]]; then
-      _log "2"
-    fi
-  fi
-
   # create new temp file
   if [[ -f "$TEMP_FILE" ]] ; then
     rm "$TEMP_FILE" 2>> "$LOG_FILE"
   fi
   touch "$TEMP_FILE" 2>> "$LOG_FILE"
   if [[ $? != 0 ]]; then
-    _log "3"
+    _log "1"
   fi
 
   # backup previous package list and create a new one
   if [[ -f "$PKG_LIST" ]] ; then
     cp "$PKG_LIST" "$PKG_LIST_BACKUP" 2>> "$LOG_FILE"
     if [[ $? != 0 ]]; then
-      _log "4"
+      _log "2"
     fi
     rm "$PKG_LIST" 2>> "$LOG_FILE"
   fi
   touch "$PKG_LIST" 2>> "$LOG_FILE"
   if [[ $? != 0 ]]; then
     cp "$PKG_LIST_BACKUP" "$PKG_LIST"
-    _log "5"
+    _log "3"
   fi
 }
 
@@ -164,14 +154,14 @@ _upd_url() {
   URL="https://aur.archlinux.org/packages/?O=$1&C=0&SeB=n&K=&outdated=off&SB=n&SO=a&PP=250&do_Search=Go"
 }
 
-# _get_pkg_count($URL) - retrieve the number of packages in the AUR
+# _get_pkg_count() - retrieve the number of packages in the AUR
 #
 # this information is conveniently included in the AUR search results page
 _get_pkg_count() {
-  curl "$1" -sS 2>> "$LOG_FILE" > "$TEMP_FILE" &
+  curl -sS "$URL" 2>> "$LOG_FILE" > "$TEMP_FILE" &
   wait $!
   if [[ $? != 0 ]]; then
-    _log "6"
+    _log "4"
   fi
   PKG_COUNT="$( sed -n '0,/packages found/s/.*<p>\(.*\) packages found.*/\1/p' \
     "$TEMP_FILE" )"
@@ -182,10 +172,10 @@ _get_pkg_count() {
 # _get_pkgs($URL) - retrieve the raw HTML data for each page of search results
 #                   using an update URL
 _get_pkgs() {
-  curl "$1" -sS 2>> "$LOG_FILE" >> "$TEMP_FILE" &
+  curl -sS "$URL" 2>> "$LOG_FILE" >> "$TEMP_FILE" &
   wait $!
   if [[ $? != 0 ]]; then
-    _log "7"
+    _log "5"
   fi
   return 0
 }
@@ -197,10 +187,10 @@ _get_raw() {
   let "LOOPS=$PKG_COUNT/$PER_PAGE"
 
   # get raw HTML from each page of search results
-  while [[ "$LOOPS" -gt 0 ]] ; do
+  while [[ "$LOOPS" -ge 0 ]] ; do
     let "COUNT += $PER_PAGE"
+    _get_pkgs
     _upd_url "$COUNT"
-    _get_pkgs "$URL"
     let "LOOPS--"
   done
 }
@@ -224,7 +214,7 @@ _init
 _upd_url "$COUNT"
 
 # get number of packages in AUR
-_get_pkg_count "$URL"
+_get_pkg_count
 
 # get raw data from the AUR
 _get_raw
