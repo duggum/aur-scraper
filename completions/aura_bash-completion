@@ -1,6 +1,6 @@
 # Bash completion for Aura
 #
-#   This file is part of aur-scrpaer
+#   This file is part of aur-scraper
 #
 #   Copyright 2014 Dave Jopson <duggum@duggum.com>
 #
@@ -19,12 +19,23 @@
 #
 ################################################################################
 #
+#   Credits
+#
+#   * Colin Woodbury (a.k.a. fosskers (https://github.com/fosskers/aura) for the
+#     original completion file
+#   * The pacman authors for the original pacman completion file
+#
+################################################################################
+#
 # Includes completion for AUR packages with the installation
 # of the aur_scraper script.
 
 # retrieve list of aur packages
 _aura_get_aur_pkgs() {
-    local aur_list="$HOME/.aura/aur_pkg_list.txt"
+    ### Edit this variable if you have the AUR package list stored ###
+    ### somewhere other than the aur-scraper default location      ###
+    local aur_list="/usr/share/aur-scraper/aur_pkg_list.txt"
+    ##################################################################
     if [[ -f "$aur_list" ]]; then
         aur_pkgs=$( cat "$aur_list" ) # <-- NOT a local var!!
         have_aur=true # <-- NOT a local var!!
@@ -155,9 +166,9 @@ _aura()
         -O --orphans -D --database -Q --query -R --remove -S --sync \
         -T --deptest -U --upgrade --auradebug --languages --noconfirm --no-pp \
         -V --version -h --help"
+    # options common to all pacman functions
     pcommon="--arch --cachedir --color --config --dbpath --debug --gpgdir \
-        --logfile --noprogressbar --noscriptlet --quiet --root --verbose \
-        -b -d -h -q -r -v"
+        --help --logfile --noconfirm --root --verbose -b -h -r -v"
 
     # load aur pkg list if it's available
     _aura_get_aur_pkgs
@@ -168,7 +179,7 @@ _aura()
         _aura_incomp $o && break
     done
 
-    # if no core option
+    # if no core option entered
     if [[ $? != 0 ]]; then
         _aura_compgen "$core"
     else
@@ -251,7 +262,7 @@ _aura()
                     return 0
                 else
                     # offer ABS pkg selection
-                    _aura_pac_pkg Qq sort
+                    _aura_pac_pkg Slq
                     return 0
                 fi
                 ;;
@@ -286,9 +297,9 @@ _aura()
             -Q|--query)
                 if $showopts; then
                     opts="--changelog --check --deps --explicit --file \
-                        --foreign --groups --info --list --owns --search \
-                        --unrequired --upgrades -c -e -g -i -k -l -m -o -p \
-                        -s -t -u $pcommon"
+                        --foreign --groups --info --list --native --owns \
+                        --quiet --search --unrequired --upgrades -c -d -e -g \
+                        -i -k -l -m -n -o -p -q -s -t -u $pcommon"
                     _aura_compgen "$opts"
                     return 0
                 else
@@ -320,8 +331,9 @@ _aura()
                 ;;
             -R|--remove)
                 if $showopts; then
-                    opts="--cascade --dbonly --nodeps --nosave --print \
-                        --recursive --unneeded -c -n -p -s -u $pcommon"
+                    opts="--cascade --dbonly --nodeps --noprogressbar --nosave \
+                        --noscriptlet --print --print-format --recursive \
+                        --unneeded -c -d -n -p -s -u $pcommon"
                     _aura_compgen "$opts"
                     return 0
                 else
@@ -336,9 +348,9 @@ _aura()
                 if $showopts; then
                     opts="--asdeps --asexplicit --clean --dbonly --downloadonly \
                         --force --groups --ignore --ignoregroup --info --list \
-                        --needed --nodeps --print --refresh --recursive \
-                        --search --sysupgrade -c -g -i -l -p -s -u -w -y \
-                        $pcommon"
+                        --needed --nodeps --noprogressbar --noscriptlet --print \
+                        --print-format --quiet --refresh --recursive --search \
+                        --sysupgrade -c -d -g -i -l -p -q -s -u -w -y $pcommon"
                     _aura_compgen "$opts"
                     return 0
                 else
@@ -378,8 +390,10 @@ _aura()
                 ;;
             -U|--upgrade)
                 if $showopts; then
-                    opts="--asdeps --asexplicit --force --needed --nodeps \
-                        --print --recursive -p $pcommon"
+                    opts="--asdeps --asexplicit --dbonly --force --ignore \
+                        --ignoregroup --needed --nodeps --noprogressbar \
+                        --noscriptlet --print --print-format --recursive \
+                        -d -p $pcommon"
                     _aura_compgen "$opts"
                     return 0
                 else

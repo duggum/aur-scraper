@@ -19,14 +19,18 @@
 #
 ################################################################################
 
+# directories
+DATA_DIR="/usr/share/aur-scraper"
+LOG_DIR="/var/log"
+TEMP_DIR="/tmp"
+
 # working files - these will need tweaking if included in a package
-LOG_FILE="$HOME/aur-scraper.log"                  # log file for errors
-INSTALL_DIR="$HOME/.aura"
-PKG_LIST="$INSTALL_DIR/aur_pkg_list.txt"          # final home of the pkg list
-PKG_LIST_BACKUP="$INSTALL_DIR/aur_pkg_list.bak"   # backup of previous list
-TEMP_FILE="$INSTALL_DIR/aur_pkg.temp"             # temp file used for scraping
-ERR_ICON="$INSTALL_DIR/icons/error.svg"
-SUC_ICON="$INSTALL_DIR/icons/success.svg"
+LOG_FILE="$LOG_DIR/aur-scraper.log"
+TEMP_FILE="$TEMP_DIR/aur_pkg.temp"
+PKG_LIST="$DATA_DIR/aur_pkg_list.txt"
+PKG_LIST_BACKUP="$DATA_DIR/aur_pkg_list.bak"
+ERR_ICON="$DATA_DIR/icons/error.svg"
+SUC_ICON="$DATA_DIR/icons/success.svg"
 
 URL=""          # url of the AUR page to be scraped
 PER_PAGE="250"  # how many AUR results to pull per page (50, 100, or 250)
@@ -85,15 +89,15 @@ _log() {
   local msg code="$1"
 
   case $code in
-    0)  msg="The list of AUR packages has been successfully updated." ;;
-    1)  msg="Failed to create the log file at $LOG_FILE" ;;
-    2)  msg="Failed to create installation directory at $INSTALL_DIR" ;;
-    3)  msg="Failed to create TEMP file at $TEMP_FILE" ;;
-    4)  msg="Failed to backup existing package list at $PKG_LIST_BACKUP" ;;
-    5)  msg="Failed to create new package list file at $PKG_LIST. Backup restored." ;;
-    6)  msg="Curl could not complete the data transfer (package count)." ;;
-    7)  msg="Curl could not complete the data transfer (package list)." ;;
-    99) msg="Unable to create the log file at $LOG_FILE" ;;
+    0)  msg="The list of AUR packages has been successfully updated."           ;;
+    1)  msg="Failed to create the log file at $LOG_FILE"                        ;;
+    2)  msg="Failed to create installation directory at $INSTALL_DIR"           ;;
+    3)  msg="Failed to create TEMP file at $TEMP_FILE"                          ;;
+    4)  msg="Failed to backup existing package list at $PKG_LIST_BACKUP"        ;;
+    5)  msg="Failed to create package list file at $PKG_LIST. Backup restored." ;;
+    6)  msg="Curl could not complete the data transfer (package count)."        ;;
+    7)  msg="Curl could not complete the data transfer (package list)."         ;;
+    99) msg="Unable to create the log file at $LOG_FILE"                        ;;
   esac
 
   if [[ "$code" == "0" ]]; then
@@ -119,7 +123,7 @@ _init() {
   fi
   _log_header
 
-  # create install dir in $HOME
+  # create install dir in /etc/aur-scraper
   if [[ ! -d "$INSTALL_DIR" ]]; then
     mkdir -p "$INSTALL_DIR"  &>> "$LOG_FILE"
     if [[ $? != 0 ]]; then
