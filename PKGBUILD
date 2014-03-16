@@ -9,20 +9,35 @@ arch=('any')
 optdepends=('sudo: execute applications as non-root'
             'libnotify: status notifications')
 source=(https://github.com/duggum/${pkgname}/archive/${pkgver}.tar.gz)
-md5sums=('2dfdefa8ebce69325d73f50a971e0a7a')
+md5sums=('a6da193bd1f071324fd375dcdac1b75a')
 
 package() {
-    cd ${srcdir}/${pkgname}-${pkgver}
+
+    local file spref shdir sdir ddir
+    spref="$srcdir/$pkgname-$pkgver"
+    shdir="usr/share/aur-scraper"
+
+    cd "$spref"
 
     # Installing initial package list
-    install -Dm 644 "${srcdir}/${pkgname}-${pkgver}/aur_pkg_list.txt" "$pkgdir/usr/share/aur-scraper/aur_pkg_list.txt"
+    install -Dm 644 "$spref/aur_pkg_list.txt" "$pkgdir/$shdir/aur_pkg_list.txt"
 
     # Installing icons
-    install -Dm 644 "${srcdir}/${pkgname}-${pkgver}/icons" "$pkgdir/usr/share/aur-scraper/icons"
+    sdir="$spref/icons"
+    ddir="$pkgdir/$shdir/icons"
+    for file in $( ls "$sdir" ); do
+        install -Dm 644 "$sdir/$file" "$ddir/$file"
+    done
 
     # Installing completion files
-    install -Dm 644 "${srcdir}/${pkgname}-${pkgver}/completions" "$pkgdir/usr/share/aur-scraper/completions"
+    sdir="$spref/completions"
+    ddir="$pkgdir/$shdir/completions"
+    for file in $( ls "$sdir" ); do
+        install -Dm 644 "$sdir/$file" "$ddir/$file"
+    done
 
     # Installing main script
-    install -Dm 755 "${srcdir}/${pkgname}-${pkgver}/aur-scraper" "$pkgdir/usr/bin/aur-scraper"
+    install -Dm 755 "$spref/aur-scraper" "$pkgdir/usr/bin/aur-scraper"
+
+    unset file spref shdir sdir ddir
 }
