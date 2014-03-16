@@ -9,7 +9,7 @@ arch=('any')
 optdepends=('sudo: execute applications as non-root'
             'libnotify: status notifications')
 source=(https://github.com/duggum/${pkgname}/archive/${pkgver}.tar.gz)
-md5sums=('a6da193bd1f071324fd375dcdac1b75a')
+md5sums=('cdd4a9185f299ec862f99f6804d47957')
 
 package() {
 
