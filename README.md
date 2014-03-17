@@ -59,7 +59,7 @@ It is important to note that the package list created by this script **does not*
     * sort by -     name
     * sort order -  ascending
     * per page -    250
-2. ll orphan package entries are removed from the raw HTML.
+2. All orphan package entries are removed from the raw HTML.
 3. The individual package names are extracted and stored in a plain text file.
 
 That's it. You end up with a text file.
