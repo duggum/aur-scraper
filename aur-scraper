@@ -106,6 +106,9 @@ _log() {
     cat "$LOG_FILE"
   fi
 
+  # restore backup file
+  cp "$PKG_LIST_BACKUP" "$PKG_LIST"
+
   _notify "$code"
 
   exit "$code"
@@ -140,7 +143,6 @@ _init() {
   fi
   touch "$PKG_LIST" 2>> "$LOG_FILE"
   if [[ $? != 0 ]]; then
-    cp "$PKG_LIST_BACKUP" "$PKG_LIST"
     _log "3"
   fi
 }
