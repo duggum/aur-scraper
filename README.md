@@ -1,3 +1,6 @@
+# ARCHIVED: 2023-12-07  
+
+
 # aur-scraper
 
 ### What does aur-scraper do?
